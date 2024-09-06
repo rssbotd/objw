@@ -9,6 +9,7 @@
 import inspect
 import os
 import profile
+import shutil
 import sys
 import termios
 import time
@@ -17,9 +18,7 @@ import time
 sys.path.insert(0, os.getcwd())
 
 
-from objx  import Object, keys
-
-
+from objx         import Object
 from objw.default import Default
 from objw.utils   import laps, skip, spl
 from objw.workdir import Workdir, skel
@@ -216,8 +215,8 @@ def main():
     parse(Cfg, " ".join(sys.argv[1:]))
     Cfg.mod = ",".join(modnames(MODS))
     if "f" in Cfg.opts:
-        if os.path.exists(Persist.workdir):
-            shutil.rmtree(Persist.workdir)
+        if os.path.exists(Workdir.wdr):
+            shutil.rmtree(Workdir.wdr)
     skel()
     scan(Cfg.mod, MODS)
     nrcommand = len(Commands.cmds) or 1

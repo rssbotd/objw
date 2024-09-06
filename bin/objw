@@ -16,8 +16,8 @@ import time
 sys.path.insert(0, os.getcwd())
 
 
-from objx.default import Default
-from objx.object  import keys
+from objx         import keys
+from objw.default import Default
 from objw.utils   import skip, spl
 
 

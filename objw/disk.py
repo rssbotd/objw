@@ -1,5 +1,5 @@
 # This file is placed in the Public Domain.
-# pylint: disable=C,I,R
+# pylint: disable=C,I,R,W0105
 
 
 "disk"
@@ -22,6 +22,7 @@ disklock = _thread.allocate_lock()
 
 
 "utilities"
+
 
 def cdir(pth):
     "create directory."
