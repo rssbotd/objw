@@ -8,9 +8,9 @@
 import os
 
 
-from objx.default import Default
+from objx         import search, update
+from objw.default import Default
 from objw.disk    import fetch
-from objx.object  import search, update
 from objw.utils   import fqn, fntime, strip
 from objw.workdir import long, store
 

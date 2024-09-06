@@ -10,7 +10,7 @@ import os
 import pathlib
 
 
-from objx.object import Object
+from objx        import Object
 from objw.utils  import fqn
 
 

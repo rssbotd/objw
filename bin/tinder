@@ -17,8 +17,10 @@ import time
 sys.path.insert(0, os.getcwd())
 
 
-from objx.default import Default
-from objx.object  import Object, keys
+from objx  import Object, keys
+
+
+from objw.default import Default
 from objw.utils   import laps, skip, spl
 from objw.workdir import Workdir, skel
 
@@ -176,13 +178,8 @@ def payload():
     for _nr in range(Cfg.index or 1):
         for cmdd in cmdz:
             for ex in getattr(param, cmdd, [""]):
-                evt = Event()
-                evt.txt = cmdd + " " + ex
-                command(evt)
-                if "v" in Cfg.opts:
-                    for text in evt.result:
-                        print(f'{cmdd} => {text}')
-
+                txt = cmdd + " " + ex
+                cmnd(txt)
 
 def scan(modstr, *pkgs, disable=""):
     "scan modules for commands and classes"

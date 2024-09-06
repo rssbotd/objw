@@ -8,7 +8,7 @@
 import time
 
 
-from objx.object import Object
+from objx        import Object
 from objw.disk   import sync
 from objw.find   import find
 from objw.utils  import fntime, laps

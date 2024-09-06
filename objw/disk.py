@@ -10,9 +10,9 @@ import pathlib
 import _thread
 
 
+from objx         import update
 from objx.decoder import load
 from objx.encoder import dump
-from objx.object  import update
 from objw.workdir import store
 from objw.utils   import ident
 

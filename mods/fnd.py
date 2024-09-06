@@ -5,9 +5,9 @@
 "locate"
 
 
-from objw.find     import find
+from objx         import  fmt
+from objw.find    import find
 from objw.workdir import long, skel, types
-from objx.object  import  fmt
 
 
 def fnd(event):
