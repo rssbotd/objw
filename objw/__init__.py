@@ -5,11 +5,6 @@
 "objects workdir"
 
 
-from . import find, disk, workdir
-
-
-from .find    import *
-from .disk    import *
 from .workdir import *
 
 
@@ -17,9 +12,15 @@ def __dir__():
     return (
         'Workdir',
         'find',
-        'last',
+        'fns',
         'fetch',
+        'last'
+        'long',
         'read',
+        'skel',
+        'store',
         'sync',
+        'types',
+        'whitelist',
         'write'
     )
