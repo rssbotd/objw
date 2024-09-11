@@ -6,21 +6,4 @@
 
 
 from .workdir import *
-
-
-def __dir__():
-    return (
-        'Workdir',
-        'find',
-        'fns',
-        'fetch',
-        'last'
-        'long',
-        'read',
-        'skel',
-        'store',
-        'sync',
-        'types',
-        'whitelist',
-        'write'
-    )
+from .workdir import __dir__
