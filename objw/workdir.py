@@ -12,7 +12,7 @@ import pathlib
 import _thread
 
 
-from .object import Default, dump, fqn, load, search, update
+from objx import Default, dump, fqn, load, search, update
 
 
 lock = _thread.allocate_lock()
