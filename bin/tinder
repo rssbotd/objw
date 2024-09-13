@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # This file is placed in the Public Domain.
-# pylint: disable=C,I,R,W0621
 
 
 "objects"
@@ -12,14 +11,15 @@ import profile
 import shutil
 import sys
 import termios
+import threading
 import time
 
 
 sys.path.insert(0, os.getcwd())
 
 
-from objw.object  import Default, Object
-from objw.workdir import Workdir, skel
+from objx import Default, Object, keys, fmt
+from objw import Workdir, find, fntime, long, skel, sync, types
 
 
 Workdir.wdr = ".test"
@@ -36,17 +36,12 @@ Cfg = Default()
 
 
 param = Object()
-param.fnd = ["log", "todo", "rss", "config"]
-param.log = ["bla"]
-param.mod = [""]
-param.tdo = ["mekker"]
-
-
-if os.path.exists("mods"):
-    from mods import all as MODS
-else:
-    MODS = None
-
+param.cmd = ["",]
+param.fnd = ["log", ""]
+param.log = ["bla", ""]
+param.mod = ["",]
+param.thr = ["",]
+param.upt = ["",]
 
 class Event(Default):
 
@@ -77,15 +72,6 @@ class Commands:
         if func.__module__ != "__main__":
             Commands.modnames[func.__name__] = func.__module__
 
-    @staticmethod
-    def scan(mod) -> None:
-        "scan module for commands."
-        for key, cmd in inspect.getmembers(mod, inspect.isfunction):
-            if key.startswith("cb"):
-                continue
-            if 'event' in cmd.__code__.co_varnames:
-                Commands.add(cmd)
-
 
 def cmnd(txt):
     "do a command using the provided output function."
@@ -105,6 +91,9 @@ def command(evt):
     func = Commands.cmds.get(evt.cmd, None)
     if func:
         func(evt)
+        for text in evt.result:
+            if "v" in Cfg.opts:
+                print(text)
 
 
 def parse(obj, txt=None):
@@ -201,15 +190,6 @@ def laps(seconds, short=True):
     return txt
 
 
-
-def modnames(*args):
-    "return module names."
-    res = []
-    for arg in args:
-        res.extend({x for x in dir(arg) if not x.startswith("__")})
-    return sorted(set(res))
-
-
 def payload():
     "do payload."
     cmdz = Commands.cmds
@@ -217,21 +197,8 @@ def payload():
         for cmdd in cmdz:
             for ex in getattr(param, cmdd, [""]):
                 txt = cmdd + " " + ex
+                print(txt)
                 cmnd(txt)
-
-def scan(modstr, *pkgs, disable=""):
-    "scan modules for commands and classes"
-    mds = []
-    for modname in spl(modstr):
-        if skip(modname, disable):
-            continue
-        for pkg in pkgs:
-            module = getattr(pkg, modname, None)
-            if not module:
-                continue
-            Commands.scan(module)
-    return mds
-
 
 def skip(name, skipp):
     "check for skipping"
@@ -250,7 +217,113 @@ def spl(txt):
     return [x for x in res if x]
 
 
-def wrap(function): # pylint: disable=E0102
+"commands"
+
+
+def cmd(event):
+    "list commands."
+    event.reply(",".join(sorted(keys(Commands.cmds))))
+
+
+Commands.add(cmd)
+
+
+def fnd(event):
+    "locate objects."
+    skel()
+    if not event.rest:
+        res = sorted([x.split('.')[-1].lower() for x in types()])
+        if res:
+            event.reply(",".join(res))
+        return
+    otype = event.args[0]
+    clz = long(otype)
+    if "." not in clz:
+        for fnm in types():
+            claz = fnm.split(".")[-1]
+            if otype == claz.lower():
+                clz = fnm
+    nmr = 0
+    for fnm, obj in find(clz, event.gets):
+        event.reply(f"{nmr} {fmt(obj)}")
+        nmr += 1
+    if not nmr:
+        event.reply("no result")
+
+Commands.add(fnd)
+
+
+class Log(Object):
+
+    "Log"
+
+    def __init__(self):
+        super().__init__()
+        self.txt = ''
+
+
+def log(event):
+    "log text."
+    if not event.rest:
+        nmr = 0
+        for fnm, obj in find('log'):
+            lap = laps(time.time() - fntime(fnm))
+            event.reply(f'{nmr} {obj.txt} {lap}')
+            nmr += 1
+        if not nmr:
+            event.reply('no log')
+        return
+    obj = Log()
+    obj.txt = event.rest
+    sync(obj)
+    event.reply('ok')
+
+
+Commands.add(log)
+
+
+def thr(event):
+    "list threads."
+    result = []
+    for thread in sorted(threading.enumerate(), key=lambda x: x.name):
+        if str(thread).startswith('<_'):
+            continue
+        obj = Object()
+        update(obj, vars(thread))
+        if getattr(obj, 'current', None):
+            thread.name = obj.current
+        if getattr(obj, 'sleep', None):
+            uptime = obj.sleep - int(time.time() - obj.state["latest"])
+        elif getattr(obj, 'starttime', None):
+            uptime = int(time.time() - obj.starttime)
+        else:
+            uptime = int(time.time() - STARTTIME)
+        result.append((uptime, thread.name))
+    res = []
+    for uptime, txt in sorted(result, key=lambda x: x[1]):
+        lap = laps(uptime)
+        res.append(f'{txt}/{lap}')
+    if res:
+        event.reply(' '.join(res))
+    else:
+        event.reply('no threads')
+
+
+Commands.add(thr)
+
+
+def upt(event):
+    "show uptime."
+    event.reply(laps(time.time()-STARTTIME))
+
+
+Commands.add(upt)
+
+
+"runtime"
+
+
+def wrap(function):
     "reset terminal."
     old2 = None
     try:
@@ -269,12 +342,10 @@ def wrap(function): # pylint: disable=E0102
 def main():
     "main"
     parse(Cfg, " ".join(sys.argv[1:]))
-    Cfg.mod = ",".join(modnames(MODS))
     if "f" in Cfg.opts:
         if os.path.exists(Workdir.wdr):
             shutil.rmtree(Workdir.wdr)
     skel()
-    scan(Cfg.mod, MODS)
     nrcommand = len(Commands.cmds) or 1
     if "p" in Cfg.opts:
         profile.runctx(payload.__code__, globals(), locals())
